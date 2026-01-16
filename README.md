@@ -13,7 +13,7 @@ Just copy-paste this **one line** in Terminal and press Enter:
 curl -fsSL https://raw.githubusercontent.com/Mishra-coder/Automatic_Connect_Wifi/main/install.sh | bash
 ```
 
-That's it, installed! 🎉
+**Note:** It might ask for your system password to install globally (so you can use it anytime).
 
 ---
 
@@ -56,8 +56,9 @@ Whenever you come to college and WiFi connects, it will automatically login.
 ## ❓ Common Questions
 
 **Q: Command not found error?**
-A: Restart your terminal.
-If it still doesn't work, try running this command directly:
+A: It usually installs globally. If you still see this:
+1. Restart your terminal.
+2. If it still fails, use this direct command:
 ```bash
 ~/wifi-autologin/bin/wifi-autologin setup
 ```
@@ -73,4 +74,4 @@ A: Just run `wifi-autologin setup` again.
 
 ---
 
-**Made for Friends **
+**Made for Friends ❤️**
