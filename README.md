@@ -25,7 +25,7 @@ Type in Terminal:
 ```bash
 wifi-autologin setup
 ```
-- Enter your WiFi account.
+- Enter your WiFi account/username.
 - Enter your WiFi password.
 
 ---
