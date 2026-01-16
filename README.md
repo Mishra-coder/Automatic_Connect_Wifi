@@ -55,6 +55,13 @@ Whenever you come to college and WiFi connects, it will automatically login.
 
 ## ❓ Common Questions
 
+**Q: Command not found error?**
+A: Restart your terminal.
+If it still doesn't work, try running this command directly:
+```bash
+~/wifi-autologin/bin/wifi-autologin setup
+```
+
 **Q: Is this safe?**
 A: Yes, absolutely! Your password is saved encrypted in macOS Keychain (just like Safari saves passwords).
 
