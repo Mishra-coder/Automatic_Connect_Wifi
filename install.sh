@@ -23,12 +23,34 @@ python3 -m pip install --user -q -r requirements.txt
 
 chmod +x bin/wifi-autologin
 
-SHELL_RC="$HOME/.zshrc"
-if ! grep -q "wifi-autologin/bin" "$SHELL_RC" 2>/dev/null; then
-    echo "" >> "$SHELL_RC"
-    echo "# WiFi Auto-Login" >> "$SHELL_RC"
-    echo "export PATH=\"\$HOME/wifi-autologin/bin:\$PATH\"" >> "$SHELL_RC"
-    echo "✅ Added to PATH"
+echo ""
+echo "🔗 Creating global link..."
+
+# Try to install to /usr/local/bin (Global path) - works for everyone immediately
+INSTALLED_GLOBALLY=false
+
+if [ -w "/usr/local/bin" ]; then
+    ln -sf "$INSTALL_DIR/bin/wifi-autologin" "/usr/local/bin/wifi-autologin"
+    INSTALLED_GLOBALLY=true
+else
+    echo "⚠️  Requesting permission to install globally (for immediate use)..."
+    if sudo ln -sf "$INSTALL_DIR/bin/wifi-autologin" "/usr/local/bin/wifi-autologin"; then
+         INSTALLED_GLOBALLY=true
+    else
+         echo "⚠️  Could not install globally. Falling back to local PATH."
+    fi
+fi
+
+if [ "$INSTALLED_GLOBALLY" = true ]; then
+    echo "✅ Installed globally! (No restart needed)"
+else
+    SHELL_RC="$HOME/.zshrc"
+    if ! grep -q "wifi-autologin/bin" "$SHELL_RC" 2>/dev/null; then
+        echo "" >> "$SHELL_RC"
+        echo "# WiFi Auto-Login" >> "$SHELL_RC"
+        echo "export PATH=\"\$HOME/wifi-autologin/bin:\$PATH\"" >> "$SHELL_RC"
+        echo "✅ Added to config file ($SHELL_RC)"
+    fi
 fi
 
 echo ""
@@ -37,10 +59,12 @@ echo "✅ Installation Complete!"
 echo "================================"
 echo ""
 echo "Next steps:"
-echo "  1. Restart terminal (or run: source ~/.zshrc)"
-echo "  2. Setup: wifi-autologin setup"
-echo "     (Or run: ~/wifi-autologin/bin/wifi-autologin setup)"
-echo "  3. Start: wifi-autologin start"
+echo "  1. Run setup: wifi-autologin setup"
+echo "  2. Run start: wifi-autologin start"
 echo ""
-echo "Help: wifi-autologin --help"
+if [ "$INSTALLED_GLOBALLY" = false ]; then
+    echo "⚠️  If 'command not found', run this:"
+    echo "   source ~/.zshrc"
+    echo "   OR use direct path: ~/wifi-autologin/bin/wifi-autologin setup"
+fi
 echo ""
