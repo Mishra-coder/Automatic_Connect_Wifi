@@ -1,0 +1,230 @@
+#!/usr/bin/env python3
+
+import sys
+
+import subprocess
+import argparse
+import keyring
+import getpass
+from pathlib import Path
+
+VERSION = "1.0.0"
+SERVICE_NAME = "WiFi-AutoLogin-Newton"
+PLIST_NAME = "com.wifi.autologin"
+INSTALL_DIR = Path(__file__).parent.parent / "libexec"
+LOG_FILE = Path.home() / "Library/Logs/wifi-auto-login.log"
+
+def setup_credentials():
+    print("=" * 60)
+    print("🔐 WiFi Auto-Login Setup")
+    print("=" * 60)
+    print()
+    
+    username = input("Enter your WiFi username: ").strip()
+    if not username:
+        print("❌ Username cannot be empty!")
+        sys.exit(1)
+    
+    password = getpass.getpass("Enter password: ").strip()
+    if not password:
+        print("❌ Password cannot be empty!")
+        sys.exit(1)
+    
+    password_confirm = getpass.getpass("Confirm password: ").strip()
+    if password != password_confirm:
+        print("❌ Passwords do not match!")
+        sys.exit(1)
+    
+    try:
+        keyring.set_password(SERVICE_NAME, username, password)
+        keyring.set_password(SERVICE_NAME, "default_username", username)
+        
+        print()
+        print("✅ Credentials saved to Keychain!")
+        print()
+        print("Next: Run 'wifi-autologin start'")
+        
+    except Exception as e:
+        print(f"❌ Failed: {str(e)}")
+        sys.exit(1)
+
+def start_service():
+    plist_path = Path.home() / f"Library/LaunchAgents/{PLIST_NAME}.plist"
+    
+    if not plist_path.exists():
+        print("⚠️  Installing LaunchAgent...")
+        install_launchagent()
+    
+    result = subprocess.run(
+        ["launchctl", "load", str(plist_path)],
+        capture_output=True,
+        text=True
+    )
+    
+    if result.returncode == 0 or "already loaded" in result.stderr.lower():
+        print("✅ Service started!")
+        print(f"📋 Logs: {LOG_FILE}")
+    else:
+        print(f"❌ Failed: {result.stderr}")
+        sys.exit(1)
+
+def stop_service():
+    plist_path = Path.home() / f"Library/LaunchAgents/{PLIST_NAME}.plist"
+    
+    result = subprocess.run(
+        ["launchctl", "unload", str(plist_path)],
+        capture_output=True,
+        text=True
+    )
+    
+    if result.returncode == 0 or "could not find" in result.stderr.lower():
+        print("✅ Service stopped!")
+    else:
+        print(f"⚠️  {result.stderr}")
+
+def service_status():
+    result = subprocess.run(
+        ["launchctl", "list"],
+        capture_output=True,
+        text=True
+    )
+    
+    if PLIST_NAME in result.stdout:
+        print("✅ Service is RUNNING")
+        
+        try:
+            username = keyring.get_password(SERVICE_NAME, "default_username")
+            if username:
+                print(f"👤 Username: {username}")
+        except:
+            pass
+    else:
+        print("⏸️  Service is NOT running")
+        print("Run 'wifi-autologin start' to start")
+
+def view_logs():
+    if not LOG_FILE.exists():
+        print("📋 No logs yet")
+        return
+    
+    print("📋 Recent logs:")
+    print("=" * 60)
+    
+    result = subprocess.run(
+        ["tail", "-50", str(LOG_FILE)],
+        capture_output=True,
+        text=True
+    )
+    
+    print(result.stdout)
+
+def install_launchagent():
+    plist_path = Path.home() / f"Library/LaunchAgents/{PLIST_NAME}.plist"
+    script_path = INSTALL_DIR / "wifi_auto_login.py"
+    
+    plist_content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>{PLIST_NAME}</string>
+    
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>{script_path}</string>
+    </array>
+    
+    <key>RunAtLoad</key>
+    <true/>
+    
+    <key>KeepAlive</key>
+    <dict>
+        <key>NetworkState</key>
+        <true/>
+    </dict>
+    
+    <key>StandardOutPath</key>
+    <string>{Path.home()}/Library/Logs/wifi-auto-login-stdout.log</string>
+    
+    <key>StandardErrorPath</key>
+    <string>{Path.home()}/Library/Logs/wifi-auto-login-stderr.log</string>
+    
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+</dict>
+</plist>"""
+    
+    plist_path.parent.mkdir(parents=True, exist_ok=True)
+    plist_path.write_text(plist_content)
+    
+    print("✅ LaunchAgent installed")
+
+def uninstall():
+    print("🗑️  Uninstalling...")
+    
+    stop_service()
+    
+    plist_path = Path.home() / f"Library/LaunchAgents/{PLIST_NAME}.plist"
+    if plist_path.exists():
+        plist_path.unlink()
+        print("✅ Removed LaunchAgent")
+    
+    try:
+        username = keyring.get_password(SERVICE_NAME, "default_username")
+        if username:
+            keyring.delete_password(SERVICE_NAME, username)
+            keyring.delete_password(SERVICE_NAME, "default_username")
+            print("✅ Removed credentials")
+    except:
+        pass
+    
+    print()
+    print("✅ Uninstalled!")
+    print("To reinstall: brew install wifi-autologin")
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="WiFi Auto-Login - Automatic portal login for macOS",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  wifi-autologin setup          Setup credentials
+  wifi-autologin start          Start service
+  wifi-autologin stop           Stop service
+  wifi-autologin status         Check status
+  wifi-autologin logs           View logs
+  wifi-autologin uninstall      Uninstall
+        """
+    )
+    
+    parser.add_argument('--version', action='version', version=f'%(prog)s {VERSION}')
+    
+    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+    
+    subparsers.add_parser('setup', help='Setup credentials')
+    subparsers.add_parser('start', help='Start service')
+    subparsers.add_parser('stop', help='Stop service')
+    subparsers.add_parser('status', help='Check status')
+    subparsers.add_parser('logs', help='View logs')
+    subparsers.add_parser('uninstall', help='Uninstall')
+    
+    args = parser.parse_args()
+    
+    if not args.command:
+        parser.print_help()
+        sys.exit(0)
+    
+    commands = {
+        'setup': setup_credentials,
+        'start': start_service,
+        'stop': stop_service,
+        'status': service_status,
+        'logs': view_logs,
+        'uninstall': uninstall,
+    }
+    
+    commands[args.command]()
+
+if __name__ == "__main__":
+    main()
