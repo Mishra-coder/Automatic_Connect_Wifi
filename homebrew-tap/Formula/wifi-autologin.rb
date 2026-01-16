@@ -1,7 +1,7 @@
 class WifiAutologin < Formula
   desc "Automatic WiFi portal login for macOS"
-  homepage "https://github.com/devendramishra/wifi-autologin"
-  url "https://github.com/devendramishra/wifi-autologin/archive/refs/tags/v1.0.0.tar.gz"
+  homepage "https://github.com/Mishra-coder/Automatic_Connect_Wifi"
+  url "https://github.com/Mishra-coder/Automatic_Connect_Wifi/archive/refs/tags/v1.0.0.tar.gz"
   sha256 "PLACEHOLDER_SHA256"
   license "MIT"
   

@@ -10,7 +10,7 @@ No need to login again and again! This tool will automatically login for you. �
 Just copy-paste this **one line** in Terminal and press Enter:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Account/wifi-autologin/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Mishra-coder/Automatic_Connect_Wifi/main/install.sh | bash
 ```
 
 That's it, installed! 🎉
@@ -66,4 +66,4 @@ A: Just run `wifi-autologin setup` again.
 
 ---
 
-**Made for Friends ❤️**
+**Made for Friends **

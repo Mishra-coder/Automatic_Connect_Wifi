@@ -13,7 +13,7 @@ if [ -d "$INSTALL_DIR" ]; then
     cd "$INSTALL_DIR" || exit
     git pull
 else
-    git clone https://github.com/Account/wifi-autologin.git "$INSTALL_DIR"
+    git clone https://github.com/Mishra-coder/Automatic_Connect_Wifi.git "$INSTALL_DIR"
     cd "$INSTALL_DIR" || exit
 fi
 
